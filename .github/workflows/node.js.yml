@@ -1,0 +1,39 @@
+
+name: Node.js CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [12.x]
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v1
+      with:
+        node-version: ${{ matrix.node-version }}
+    - run: npm ci
+    - run: npm run build --if-present
+    - run: npm run test:staging
+    - name: SSH Remote Commands
+      uses: appleboy/ssh-action@v0.1.2
+      with:
+        key: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDQfRid9YvHxBKnYO1PFJCL2dt+RLDrD4hKHouljVzj8qCUXaG2OxQoDmeXJ+ZZTQ9m44Brx+QUGaPdiVSPvdtdbfvBSmwXIFvETzHyGzJbUDnxuKOdzUc/U1fcJCb19shng6x9hB4y/h7ADwMftRiFG2QaplIc1a+QqYxc1r07hEDYQz/NLtFl8S4vPsuj9CXZe7wntl8gOdn92YVNhwthNo3nNVQ6hlYjoN3XmXq73CfX1ZlkHo9+R++3mSNNYLLgNQxgEuZvLpEvXCObL8OPDxBUgE5x/H67lTJaFm6TyYkl6K16zftZp6G0C5oOx+RLkJyK5hcjyl7YY5e7f/iSy9LuABsyu8R3j92XrdGf7HEn5HK0y0vlPsXKbXydhO1vmVvMT/6YogG9kv6yoVbkwLjvzMGZNfZ8wEpitLKC6Vea0gp294k9aGjkfMVQqJ4l3QvQfpkKkobu59urJoFj0e05x09a/wbxyLQAw7xQSkDTQGBUZeoFzOuHoEl79bk= www-data@localhost
+        host: 172.105.48.59
+        username: root
+        script: |
+          pm2 delete all
+          cd /main/epic-300/epic-300
+          git pull
+          npm install
+          node server.js
